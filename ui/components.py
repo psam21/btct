@@ -1,8 +1,36 @@
 """
 UI Components for Bitcoin Futures Trading Signal App
 
-This module contains all Streamlit UI components and layout management
-as per FR004 and FR011/FR012 requirements.
+This module contains all Streamlit UI components and layout manage    
+    def render_welcome_screen():
+    """Render welcome screen when no data is loaded."""
+    st.markdown("### 📊 Bitcoin Historical Data")
+    
+    # Quick action buttons
+    col_a, col_b = st.columns(2)
+    
+    with col_a:
+        if st.button("🔄 Fetch Historical Data", key="main_live"):
+            fetch_live_data()
+            st.rerun()
+    
+    with col_b:
+        if st.button("🗑️ Clear All Data", key="main_clear"):
+            st.session_state.market_data = None
+            st.session_state.signals = []
+            st.rerun()ttons
+    col_a, col_b = st.columns(2)
+    
+    with col_a:
+        if st.button("🔄 Fetch Historical Data", key="main_live"):
+            fetch_live_data()
+            st.rerun()
+    
+    with col_b:
+        if st.button("🗑️ Clear All Data", key="main_clear"):
+            st.session_state.market_data = None
+            st.session_state.signals = []
+            st.rerun()004 and FR011/FR012 requirements.
 """
 
 import streamlit as st
@@ -121,32 +149,10 @@ def render_main_content():
 
 def render_welcome_screen():
     """Render welcome screen when no data is loaded."""
-    st.subheader("🚀 Welcome to Bitcoin Futures Signal Engine")
+    st.markdown("### 📊 Bitcoin Historical Data")
     
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        st.markdown("""
-        ### 🎯 Get Started
-        
-        This application fetches **complete Bitcoin historical price data** from Binance API 
-        for technical analysis and trading research.
-        
-        **To begin:**
-        1. Click "🔄 Fetch Historical Data" to get complete market data from 2019 to present
-        2. View the fetched data in the dashboard
-        3. Use debug info to troubleshoot any issues
-        
-        ### ✨ Features Implemented
-        - ✅ **Historical Data Fetching**: Complete weekly data from 2019-present
-        - ✅ **Batch Processing**: Handles Binance API limits with proper batching
-        - ✅ **Real-time Status**: Progress indicators and error reporting
-        - ✅ **Data Caching**: Efficient data storage and retrieval
-        """)
-        
-        # Quick action buttons
-        st.markdown("### 🚀 Quick Actions")
-        col_a, col_b = st.columns(2)
+    # Quick action buttons
+    col_a, col_b = st.columns(2)
         
         with col_a:
             if st.button("🔄 Fetch Historical Data", key="main_live"):
