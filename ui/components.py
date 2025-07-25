@@ -390,17 +390,6 @@ def fetch_live_data():
         # Restore stdout and stderr
         sys.stdout = old_stdout
         sys.stderr = old_stderr
-        st.error(error_msg)
-        
-        # Add specific guidance for common Streamlit Cloud issues
-        if "timeout" in str(e).lower() or "connection" in str(e).lower():
-            st.warning("🚨 **Network Issue**: This appears to be a network connectivity problem.")
-            st.info("💡 **Streamlit Cloud**: External API calls may be blocked or limited on the free tier.")
-        
-        st.session_state.last_refresh = f"❌ Error: {str(e)}"
-        st.session_state.last_refresh = error_msg
-        st.write("**Debug Info:**")
-        st.code(str(e))
 
 
 def render_debug_info():
