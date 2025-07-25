@@ -174,6 +174,19 @@ def fetch_live_data():
         with progress_placeholder.container():
             st.info("🔄 Fetching historical data from Binance...")
         
+        # Add network connectivity check for Streamlit Cloud
+        with status_placeholder.container():
+            st.write("🌐 Checking Binance API connectivity...")
+        
+        from apis.binance import check_api_connection
+        if not check_api_connection():
+            progress_placeholder.empty()
+            status_placeholder.empty()
+            st.error("❌ Cannot connect to Binance API. This may be due to network restrictions on Streamlit Cloud.")
+            st.info("💡 **Streamlit Cloud Issue**: External API access may be limited. Try running locally or contact Streamlit support.")
+            st.session_state.last_refresh = "❌ API connection failed"
+            return
+        
         with status_placeholder.container():
             st.write("📅 Fetching weekly candles from 2019 to present...")
         
@@ -201,6 +214,8 @@ def fetch_live_data():
             progress_placeholder.empty()
             status_placeholder.empty()
             st.error("❌ Failed to fetch market data from Binance API")
+            st.warning("🚨 **Streamlit Cloud Limitation**: This app requires external API access which may be restricted on Streamlit Community Cloud.")
+            st.info("💡 **Solutions**: Run locally or consider using Streamlit Cloud for Business which has fewer network restrictions.")
             st.session_state.last_refresh = "❌ Failed to fetch data"
             
     except Exception as e:
@@ -208,6 +223,13 @@ def fetch_live_data():
         status_placeholder.empty()
         error_msg = f"❌ Error: {str(e)}"
         st.error(error_msg)
+        
+        # Add specific guidance for common Streamlit Cloud issues
+        if "timeout" in str(e).lower() or "connection" in str(e).lower():
+            st.warning("🚨 **Network Issue**: This appears to be a network connectivity problem.")
+            st.info("💡 **Streamlit Cloud**: External API calls may be blocked or limited on the free tier.")
+        
+        st.session_state.last_refresh = f"❌ Error: {str(e)}"
         st.session_state.last_refresh = error_msg
         st.write("**Debug Info:**")
         st.code(str(e))

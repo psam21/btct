@@ -194,10 +194,11 @@ def fetch_market_data(symbol: str = "BTCUSDT", timeframe: str = "1w", limit: int
         return market_data
         
     except requests.RequestException as e:
-        print(f"Error fetching data from Binance API: {e}")
+        print(f"❌ Network error fetching data from Binance API: {e}")
+        print("🚨 This may be due to network restrictions on Streamlit Cloud")
         return None
     except Exception as e:
-        print(f"Error processing Binance data: {e}")
+        print(f"❌ Error processing Binance data: {e}")
         return None
 
 
@@ -346,7 +347,14 @@ def check_api_connection() -> bool:
         True if API is accessible, False otherwise
     """
     try:
+        print("Testing Binance API connection...")
         server_time = get_server_time()
-        return server_time is not None
-    except Exception:
+        if server_time is not None:
+            print(f"✅ Binance API connected. Server time: {server_time}")
+            return True
+        else:
+            print("❌ Failed to get server time from Binance API")
+            return False
+    except Exception as e:
+        print(f"❌ API connection test failed: {e}")
         return False
