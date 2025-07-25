@@ -11,6 +11,11 @@ A Streamlit-based Bitcoin (BTC/USDT) perpetual futures trading signal applicatio
 - **Caching system** for optimal performance
 - **Streamlit Cloud deployment** ready
 
+## Documentation
+
+- **[Project Plan](docs/PROJECT_PLAN.md)** - Comprehensive 7-phase implementation roadmap
+- **[Requirements](docs/BTCT_Req.md)** - Detailed functional requirements (FR001-FR018)
+
 ## Requirements
 
 - Python 3.9+
@@ -52,6 +57,9 @@ btc_futures_signal_app/
 ├── README.md                   # Documentation
 ├── .gitignore                  # Git ignore rules
 ├── .env.example               # Environment variables template
+├── docs/                      # Project documentation
+│   ├── PROJECT_PLAN.md        # Implementation roadmap
+│   └── BTCT_Req.md           # Functional requirements
 ├── apis/                      # Binance API integration
 ├── logic/                     # Signal generation logic
 ├── ui/                        # UI components
