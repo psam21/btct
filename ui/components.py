@@ -10,8 +10,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
-from apis.models import MarketData, Candlestick, Signal, SignalType, PatternType, create_sample_candlestick
-from logic.signal_engine import SignalEngine
+from apis.models import MarketData, Candlestick, Signal, SignalType, PatternType
 from apis.binance import fetch_market_data, fetch_historical_data
 from utils.cache import get_cached_data, cache_data
 
@@ -35,12 +34,10 @@ def initialize_session_state():
         st.session_state.last_refresh = None
         st.session_state.market_data = None
         st.session_state.signals = []
-        st.session_state.signal_engine = SignalEngine(min_confidence=0.5)
         st.session_state.settings = {
             'auto_refresh': False,
             'cache_enabled': True,
             'show_debug': False,
-            'min_confidence': 0.5,
             'symbol': 'BTCUSDT',
             'timeframe': '1w'
         }
@@ -57,35 +54,18 @@ def render_sidebar():
     """Render sidebar controls."""
     st.sidebar.title("⚙️ Controls")
     
-    # Signal Engine Settings
-    st.sidebar.subheader("🧠 Signal Engine")
-    st.session_state.settings['min_confidence'] = st.sidebar.slider(
-        "Minimum Confidence",
-        min_value=0.1,
-        max_value=1.0,
-        value=st.session_state.settings['min_confidence'],
-        step=0.05,
-        help="Minimum confidence level for signal generation"
-    )
-    
-    # Update signal engine if confidence changed
-    if st.session_state.signal_engine.min_confidence != st.session_state.settings['min_confidence']:
-        st.session_state.signal_engine = SignalEngine(
-            min_confidence=st.session_state.settings['min_confidence']
-        )
-    
     # Market Settings
     st.sidebar.subheader("📈 Market Settings")
     st.session_state.settings['symbol'] = st.sidebar.selectbox(
         "Trading Pair",
-        options=['BTCUSDT'],
+        options=["BTCUSDT"],
         index=0,
-        help="Currently only BTC/USDT is supported"
+        help="Bitcoin USDT perpetual futures"
     )
     
     st.session_state.settings['timeframe'] = st.sidebar.selectbox(
         "Timeframe",
-        options=['1w'],
+        options=["1w"],
         index=0,
         help="Currently only weekly timeframe is supported"
     )
@@ -94,13 +74,8 @@ def render_sidebar():
     st.sidebar.subheader("📊 Data Controls")
     
     # Fetch Live Data button (using proper API)
-    if st.sidebar.button("🔄 Fetch Live Data", type="primary"):
+    if st.sidebar.button("🔄 Fetch Historical Data", type="primary"):
         fetch_live_data()
-        st.rerun()
-    
-    # Load Demo Data button
-    if st.sidebar.button("📁 Load Demo Pattern"):
-        load_demo_pattern()
         st.rerun()
     
     # Clear Data button
@@ -154,19 +129,19 @@ def render_welcome_screen():
         st.markdown("""
         ### 🎯 Get Started
         
-        This application detects **bullish and bearish engulfing patterns** in Bitcoin futures data 
-        and generates trading signals with confidence scoring.
+        This application fetches **complete Bitcoin historical price data** from Binance API 
+        for technical analysis and trading research.
         
         **To begin:**
-        1. Click "🔄 Fetch Live Data" to get real market data from Binance
-        2. Click "📁 Load Demo Pattern" to see a bullish engulfing pattern example
-        3. Adjust the minimum confidence threshold to filter signals
+        1. Click "🔄 Fetch Historical Data" to get complete market data from 2019 to present
+        2. View the fetched data in the dashboard
+        3. Use debug info to troubleshoot any issues
         
         ### ✨ Features Implemented
-        - ✅ **Pattern Detection**: Bullish/Bearish engulfing patterns
-        - ✅ **Signal Generation**: GO_LONG/GO_SHORT with confidence scoring  
-        - ✅ **Commentary Generation**: Detailed analysis of each signal
-        - ✅ **Live Data**: Real market data from Binance API
+        - ✅ **Historical Data Fetching**: Complete weekly data from 2019-present
+        - ✅ **Batch Processing**: Handles Binance API limits with proper batching
+        - ✅ **Real-time Status**: Progress indicators and error reporting
+        - ✅ **Data Caching**: Efficient data storage and retrieval
         """)
         
         # Quick action buttons
@@ -174,13 +149,14 @@ def render_welcome_screen():
         col_a, col_b = st.columns(2)
         
         with col_a:
-            if st.button("🔄 Fetch Live Data", key="main_live"):
+            if st.button("🔄 Fetch Historical Data", key="main_live"):
                 fetch_live_data()
                 st.rerun()
         
         with col_b:
-            if st.button("📁 Load Demo Pattern", key="main_demo"):
-                load_demo_pattern()
+            if st.button("�️ Clear All Data", key="main_clear"):
+                st.session_state.market_data = None
+                st.session_state.signals = []
                 st.rerun()
 
 
@@ -304,79 +280,81 @@ def render_signal_details(signals: List[Signal]):
 
 
 def fetch_live_data():
-    """Fetch live market data using proper API separation."""
+    """Fetch historical market data with user feedback."""
+    # Show progress
+    progress_placeholder = st.empty()
+    status_placeholder = st.empty()
+    
     try:
+        with progress_placeholder.container():
+            st.info("🔄 Fetching historical data from Binance...")
+        
+        with status_placeholder.container():
+            st.write("📅 Fetching weekly candles from 2019 to present...")
+        
         # Use the proper API module (FR015) with batch processing for complete historical data
         market_data = fetch_historical_data(
             symbol=st.session_state.settings['symbol']
         )
         
-        if market_data:
+        if market_data and market_data.candles:
             st.session_state.market_data = market_data
+            st.session_state.signals = []  # Clear old signals
             
-            # Generate signals
-            st.session_state.signals = st.session_state.signal_engine.generate_signals(market_data)
-            st.session_state.last_refresh = f"Fetched live data: {len(market_data.candles)} candles"
+            # Update status with success info
+            candle_count = len(market_data.candles)
+            start_date = market_data.candles[0].timestamp.strftime("%Y-%m-%d") if market_data.candles else "N/A"
+            end_date = market_data.candles[-1].timestamp.strftime("%Y-%m-%d") if market_data.candles else "N/A"
+            
+            st.session_state.last_refresh = f"✅ Successfully fetched {candle_count} weekly candles from {start_date} to {end_date}"
+            
+            # Clear progress indicators
+            progress_placeholder.empty()
+            status_placeholder.empty()
+            
+            # Show success message
+            st.success(f"✅ Fetched {candle_count} weekly candles ({start_date} to {end_date})")
             
             # Cache the data (FR016)
             cache_data(f"market_data_{st.session_state.settings['symbol']}", market_data)
+            
         else:
-            st.error("Failed to fetch live market data")
+            progress_placeholder.empty()
+            status_placeholder.empty()
+            st.error("❌ Failed to fetch market data from Binance API")
+            st.session_state.last_refresh = "❌ Failed to fetch data"
             
     except Exception as e:
-        st.error(f"Error fetching live data: {e}")
+        progress_placeholder.empty()
+        status_placeholder.empty()
+        error_msg = f"❌ Error fetching data: {str(e)}"
+        st.error(error_msg)
+        st.session_state.last_refresh = error_msg
+        st.write("**Debug Info:**")
+        st.code(str(e))
 
 
-def load_demo_pattern():
-    """Load demo data with a clear bullish engulfing pattern."""
-    candles = []
-    
-    # Create bearish candle
-    bearish_candle = create_sample_candlestick(
-        timestamp=datetime(2024, 1, 1, 0, 0, 0),
-        open_price=45000.0,
-        high_price=45200.0,
-        low_price=44500.0,
-        close_price=44600.0,  # Bearish
-        volume=1000.0
-    )
-    candles.append(bearish_candle)
-    
-    # Create bullish engulfing candle
-    engulfing_candle = create_sample_candlestick(
-        timestamp=datetime(2024, 1, 8, 0, 0, 0),
-        open_price=44400.0,  # Below previous close
-        high_price=46000.0,
-        low_price=44300.0,
-        close_price=45800.0,  # Above previous open - engulfing!
-        volume=1500.0  # Higher volume
-    )
-    candles.append(engulfing_candle)
-    
-    # Add follow-up candle
-    followup_candle = create_sample_candlestick(
-        timestamp=datetime(2024, 1, 15, 0, 0, 0),
-        open_price=45800.0,
-        high_price=46200.0,
-        low_price=45600.0,
-        close_price=46100.0,
-        volume=1200.0
-    )
-    candles.append(followup_candle)
-    
-    # Create market data
-    st.session_state.market_data = MarketData(
-        symbol="BTCUSDT",
-        timeframe="1w",
-        candles=candles,
-        patterns=[],
-        signals=[],
-        last_updated=datetime.now()
-    )
-    
-    # Generate signals
-    st.session_state.signals = st.session_state.signal_engine.generate_signals(st.session_state.market_data)
-    st.session_state.last_refresh = f"Loaded demo pattern with {len(st.session_state.signals)} signals"
+def render_debug_info():
+    """Render debug information for troubleshooting."""
+    if st.checkbox("🔧 Show Debug Info"):
+        st.subheader("🔧 Debug Information")
+        
+        # Session state info
+        debug_data = {
+            "market_data": "Loaded" if st.session_state.get('market_data') else "None",
+            "signals_count": len(st.session_state.get('signals', [])),
+            "last_refresh": st.session_state.get('last_refresh', 'Never'),
+            "symbol": st.session_state.get('settings', {}).get('symbol', 'Unknown'),
+            "timeframe": st.session_state.get('settings', {}).get('timeframe', 'Unknown'),
+            "session_state_keys": list(st.session_state.keys()),
+        }
+        
+        if st.session_state.get('market_data'):
+            debug_data["candles_count"] = len(st.session_state.market_data.candles)
+            if st.session_state.market_data.candles:
+                debug_data["date_range"] = f"{st.session_state.market_data.candles[0].timestamp} to {st.session_state.market_data.candles[-1].timestamp}"
+        
+        st.json(debug_data)
 
 
 def render_debug_info():
@@ -384,12 +362,8 @@ def render_debug_info():
     st.subheader("🔧 Debug Information")
     
     debug_data = {
-        "app_version": "0.4.0-phase4",
+        "app_version": "1.0.0-historical-data",
         "streamlit_version": st.__version__,
-        "signal_engine_config": {
-            "min_confidence": st.session_state.signal_engine.min_confidence,
-            "timeout_hours": st.session_state.signal_engine.signal_timeout_hours
-        },
         "session_state_keys": list(st.session_state.keys()),
         "settings": st.session_state.settings
     }
@@ -399,7 +373,8 @@ def render_debug_info():
             "symbol": st.session_state.market_data.symbol,
             "timeframe": st.session_state.market_data.timeframe,
             "candle_count": len(st.session_state.market_data.candles),
-            "signal_count": len(st.session_state.signals)
+            "first_candle": str(st.session_state.market_data.candles[0].timestamp) if st.session_state.market_data.candles else "None",
+            "last_candle": str(st.session_state.market_data.candles[-1].timestamp) if st.session_state.market_data.candles else "None"
         }
     
     st.json(debug_data)
