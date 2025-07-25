@@ -12,7 +12,7 @@ import sys
 from contextlib import redirect_stdout, redirect_stderr
 
 from apis.models import MarketData
-from apis.binance import fetch_historical_data
+from apis.bitfinex import fetch_historical_data, check_api_connection
 from utils.cache import cache_data
 
 
@@ -52,8 +52,8 @@ def initialize_session_state():
         st.session_state.last_refresh = None
         st.session_state.log_capture = LogCapture()
         st.session_state.settings = {
-            'symbol': 'BTCUSDT',
-            'timeframe': '1w',
+            'symbol': 'tBTCUSD',
+            'timeframe': '1W',
             'show_debug': False
         }
         st.session_state.user_actions = []
@@ -69,7 +69,7 @@ def log_user_action(action: str):
 def render_header():
     """Render application header."""
     st.title("₿ Bitcoin Historical Data")
-    st.markdown("**Weekly BTC/USDT data from 2019 to present**")
+    st.markdown("**Weekly BTC/USD spot data from 2013 to present (Bitfinex)**")
     st.markdown("---")
 
 
@@ -81,8 +81,9 @@ def render_sidebar():
     st.sidebar.subheader("📈 Settings")
     symbol = st.sidebar.selectbox(
         "Trading Pair",
-        options=["BTCUSDT"],
-        index=0
+        options=["tBTCUSD"],
+        index=0,
+        help="Bitfinex spot BTC/USD"
     )
     
     if symbol != st.session_state.settings['symbol']:
@@ -91,7 +92,7 @@ def render_sidebar():
     
     timeframe = st.sidebar.selectbox(
         "Timeframe",
-        options=["1w"],
+        options=["1W"],
         index=0,
         help="Weekly timeframe"
     )
@@ -168,7 +169,7 @@ def render_main_content():
 def render_empty_data_view():
     """Render empty state with just the table structure."""
     st.subheader("📊 OHLC Data")
-    st.info("👆 Use the **'Fetch Historical Data'** button in the sidebar to load data")
+    st.info("👆 Use the **'Fetch Historical Data'** button in the sidebar to load Bitcoin spot data from Bitfinex (2013-2025)")
     
     # Show empty table structure
     empty_df = pd.DataFrame(columns=["Date", "Open", "High", "Low", "Close", "Volume"])
@@ -308,22 +309,21 @@ def fetch_live_data():
         sys.stderr = st.session_state.log_capture
         
         with progress_placeholder.container():
-            st.info("🔄 Fetching historical data from Binance...")
+            st.info("🔄 Fetching historical data from Bitfinex...")
         
-        st.session_state.log_capture.write("Starting Binance API data fetch")
+        st.session_state.log_capture.write("Starting Bitfinex API data fetch")
         
         # Add network connectivity check for Streamlit Cloud
         with status_placeholder.container():
-            st.write("🌐 Checking Binance API connectivity...")
+            st.write("🌐 Checking Bitfinex API connectivity...")
         
-        st.session_state.log_capture.write("Checking Binance API connectivity...")
+        st.session_state.log_capture.write("Checking Bitfinex API connectivity...")
         
-        from apis.binance import check_api_connection
         if not check_api_connection():
             st.session_state.log_capture.write("❌ API connection failed - network restrictions detected")
             progress_placeholder.empty()
             status_placeholder.empty()
-            st.error("❌ Cannot connect to Binance API. This may be due to network restrictions on Streamlit Cloud.")
+            st.error("❌ Cannot connect to Bitfinex API. This may be due to network restrictions on Streamlit Cloud.")
             st.info("💡 **Streamlit Cloud Issue**: External API access may be limited. Try running locally or contact Streamlit support.")
             st.session_state.last_refresh = "❌ API connection failed"
             log_user_action("Data fetch failed - API connection issue")
@@ -332,9 +332,9 @@ def fetch_live_data():
         st.session_state.log_capture.write("✅ API connection successful")
         
         with status_placeholder.container():
-            st.write("📅 Fetching weekly candles from 2019 to present...")
+            st.write("📅 Fetching weekly candles from 2013 to present (1-year batches)...")
         
-        st.session_state.log_capture.write(f"Fetching historical data for {st.session_state.settings['symbol']}")
+        st.session_state.log_capture.write(f"Fetching historical data for {st.session_state.settings['symbol']} from Bitfinex")
         
         market_data = fetch_historical_data(
             symbol=st.session_state.settings['symbol']
@@ -364,7 +364,7 @@ def fetch_live_data():
             st.session_state.log_capture.write("❌ Failed to fetch market data - no data returned")
             progress_placeholder.empty()
             status_placeholder.empty()
-            st.error("❌ Failed to fetch market data from Binance API")
+            st.error("❌ Failed to fetch market data from Bitfinex API")
             st.warning("🚨 **Streamlit Cloud Limitation**: This app requires external API access which may be restricted on Streamlit Community Cloud.")
             st.info("💡 **Solutions**: Run locally or consider using Streamlit Cloud for Business which has fewer network restrictions.")
             st.session_state.last_refresh = "❌ Failed to fetch data"
