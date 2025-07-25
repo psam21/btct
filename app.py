@@ -131,8 +131,8 @@ def render_main_content():
         # Project status
         st.subheader("🚧 Project Status")
         st.success("✅ Phase 1: Infrastructure")
-        st.info("🔄 Phase 2: Data Layer (Next)")
-        st.info("⏳ Phase 3: Signal Engine")
+        st.success("✅ Phase 2: Data Layer")
+        st.info("🔄 Phase 3: Signal Engine (Next)")
         st.info("⏳ Phase 4: UI Components")
         st.info("⏳ Phase 5: Testing")
         st.info("⏳ Phase 6: Optional Features")
@@ -143,7 +143,7 @@ def render_main_content():
         st.subheader("🔧 Debug Information")
         st.json({
             "session_state": dict(st.session_state),
-            "app_version": "0.1.0-phase1",
+            "app_version": "0.2.0-phase2",
             "streamlit_version": st.__version__
         })
 
