@@ -1,8 +1,7 @@
 """
-Bitcoin Futures Trading Signal App
+Bitcoin Historical Data App
 
-Minimal entry point that orchestrates components and handles Streamlit configuration.
-Implements FR001, FR002, and FR004: Minimal entry point architecture.
+Simple Streamlit app for fetching and displaying Bitcoin historical data.
 """
 
 import streamlit as st
@@ -10,16 +9,10 @@ from ui.components import render_app
 
 
 def main():
-    """
-    Main application entry point.
-    
-    Implements FR001: Streamlit Framework
-    Implements FR002: Deployable on Streamlit Community Cloud
-    Implements FR004: Minimal entry point that orchestrates components
-    """
+    """Main application entry point."""
     # Streamlit page configuration
     st.set_page_config(
-        page_title="Bitcoin Futures Trading Signals",
+        page_title="Bitcoin Historical Data",
         page_icon="₿",
         layout="wide",
         initial_sidebar_state="expanded"
