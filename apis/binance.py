@@ -107,8 +107,6 @@ def fetch_historical_data(
         symbol=symbol,
         timeframe=timeframe,
         candles=sorted_candles,
-        patterns=[],
-        signals=[],
         last_updated=datetime.now()
     )
 
@@ -190,8 +188,6 @@ def fetch_market_data(symbol: str = "BTCUSDT", timeframe: str = "1w", limit: int
             symbol=symbol,
             timeframe=timeframe,
             candles=candlesticks,
-            patterns=[],  # Will be populated by signal engine
-            signals=[],   # Will be populated by signal engine
             last_updated=datetime.now()
         )
         
@@ -309,8 +305,6 @@ def fetch_historical_data(symbol: str = "BTCUSDT", start_date: datetime = None, 
             symbol=symbol,
             timeframe="1w",
             candles=unique_candlesticks,
-            patterns=[],  # Will be populated by signal engine
-            signals=[],   # Will be populated by signal engine
             last_updated=datetime.now()
         )
         
